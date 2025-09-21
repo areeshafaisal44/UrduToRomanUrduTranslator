@@ -1,11 +1,3 @@
-# Navigate to your repository
-%cd /content/UrduToRomanUrduTranslator
-
-# Update the BiLSTMEncoder class to handle 3 layers properly
-# Also update the LSTMDecoder class
-# Here's the complete updated app.py - run this:
-
-%%writefile app.py
 import streamlit as st
 import torch
 import torch.nn as nn
