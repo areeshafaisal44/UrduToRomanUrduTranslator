@@ -1,4 +1,11 @@
-# Last updated: 2025-09-21 15:47
+# Navigate to your repository
+%cd /content/UrduToRomanUrduTranslator
+
+# Update the BiLSTMEncoder class to handle 3 layers properly
+# Also update the LSTMDecoder class
+# Here's the complete updated app.py - run this:
+
+%%writefile app.py
 import streamlit as st
 import torch
 import torch.nn as nn
@@ -208,7 +215,6 @@ class Seq2SeqModel(nn.Module):
 def load_model_and_tokenizers():
     """Load trained model and tokenizers with error handling"""
     try:
-        # Try to load from different possible paths
         model_paths = [
             'best_model.pth',
             './best_model.pth',
@@ -218,6 +224,7 @@ def load_model_and_tokenizers():
         
         tokenizer_paths = [
             ('urdu_tokenizer.pkl', 'roman_tokenizer.pkl'),
+            ('experiment_1_urdu_tokenizer.pkl', 'experiment_1_roman_tokenizer.pkl'),
             ('./urdu_tokenizer.pkl', './roman_tokenizer.pkl'),
             ('tokenizers/urdu_tokenizer.pkl', 'tokenizers/roman_tokenizer.pkl'),
             ('./tokenizers/urdu_tokenizer.pkl', './tokenizers/roman_tokenizer.pkl')
@@ -233,31 +240,39 @@ def load_model_and_tokenizers():
                 try:
                     checkpoint = torch.load(path, map_location='cpu')
                     
-                    # Create model architecture
-                    vocab_size_urdu = checkpoint.get('vocab_size_urdu', 2000)
-                    vocab_size_roman = checkpoint.get('vocab_size_roman', 2000)
+                    # Your model was saved as state_dict directly
+                    # Need to determine vocab sizes from the embedding weights
+                    encoder_vocab_size = checkpoint['encoder.embedding.weight'].shape[0]
+                    decoder_vocab_size = checkpoint['decoder.embedding.weight'].shape[0]
                     
+                    # Your model has 3 layers (l0, l1, l2), not 2
                     encoder = BiLSTMEncoder(
-                        vocab_size=vocab_size_urdu,
+                        vocab_size=encoder_vocab_size,
                         embed_dim=256,
                         hidden_dim=512,
-                        num_layers=2,
+                        num_layers=3,  # Changed from 2 to 3
                         dropout=0.3
                     )
                     
                     decoder = LSTMDecoder(
-                        vocab_size=vocab_size_roman,
+                        vocab_size=decoder_vocab_size,
                         embed_dim=256,
                         hidden_dim=512,
-                        num_layers=2,
+                        num_layers=3,  # Changed from 2 to 3
                         dropout=0.3,
                         encoder_hidden_dim=512
                     )
                     
                     model = Seq2SeqModel(encoder, decoder)
-                    model.load_state_dict(checkpoint['model_state_dict'])
+                    
+                    # Load the state dict directly (checkpoint IS the state dict)
+                    model.load_state_dict(checkpoint)
                     model.eval()
+                    
+                    st.success(f"✅ Model loaded successfully from {path}")
+                    st.info(f"Encoder vocab size: {encoder_vocab_size}, Decoder vocab size: {decoder_vocab_size}")
                     break
+                    
                 except Exception as e:
                     st.warning(f"Failed to load model from {path}: {e}")
                     continue
@@ -270,6 +285,8 @@ def load_model_and_tokenizers():
                         urdu_tokenizer = pickle.load(f)
                     with open(roman_path, 'rb') as f:
                         roman_tokenizer = pickle.load(f)
+                    
+                    st.success(f"✅ Tokenizers loaded from {urdu_path} and {roman_path}")
                     break
                 except Exception as e:
                     st.warning(f"Failed to load tokenizers from {urdu_path}, {roman_path}: {e}")
@@ -476,13 +493,13 @@ def main():
             Encoder: Bidirectional LSTM
             - Embedding Dimension: 256
             - Hidden Dimension: 512
-            - Number of Layers: 2
+            - Number of Layers: 3
             - Dropout: 0.3
             
             Decoder: LSTM with Attention
             - Embedding Dimension: 256
             - Hidden Dimension: 512
-            - Number of Layers: 2
+            - Number of Layers: 3
             - Dropout: 0.3
             
             Tokenizer: Byte Pair Encoding (BPE)
