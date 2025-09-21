@@ -1,5 +1,4 @@
-# Last updated: 2025-09-21 16:16
-
+# Last updated: 2025-09-21 16:18
 import streamlit as st
 import torch
 import torch.nn as nn
@@ -209,16 +208,23 @@ class Seq2SeqModel(nn.Module):
 def load_model_and_tokenizers():
     """Load trained model and tokenizers with error handling"""
     try:
+        # Updated paths based on Colab structure
+        base_dir = '/content/UrduToRomanUrduTranslator/UrduToRomanUrduTranslator'
         model_paths = [
-            'best_model.pth',
-            './best_model.pth',
+            f'{base_dir}/best_model.pth',
+            f'{base_dir}/experiment_1_model.pth',
+            f'{base_dir}/experiment_2_model.pth',
+            f'{base_dir}/experiment_3_model.pth',
+            '/content/best_model.pth',
             'models/best_model.pth',
             './models/best_model.pth'
         ]
         
         tokenizer_paths = [
+            (f'{base_dir}/experiment_1_urdu_tokenizer.pkl', f'{base_dir}/experiment_1_roman_tokenizer.pkl'),
+            (f'{base_dir}/experiment_2_urdu_tokenizer.pkl', f'{base_dir}/experiment_2_roman_tokenizer.pkl'),
+            (f'{base_dir}/experiment_3_urdu_tokenizer.pkl', f'{base_dir}/experiment_3_roman_tokenizer.pkl'),
             ('urdu_tokenizer.pkl', 'roman_tokenizer.pkl'),
-            ('experiment_1_urdu_tokenizer.pkl', 'experiment_1_roman_tokenizer.pkl'),
             ('./urdu_tokenizer.pkl', './roman_tokenizer.pkl'),
             ('tokenizers/urdu_tokenizer.pkl', 'tokenizers/roman_tokenizer.pkl'),
             ('./tokenizers/urdu_tokenizer.pkl', './tokenizers/roman_tokenizer.pkl')
@@ -239,12 +245,13 @@ def load_model_and_tokenizers():
                     encoder_vocab_size = checkpoint['encoder.embedding.weight'].shape[0]
                     decoder_vocab_size = checkpoint['decoder.embedding.weight'].shape[0]
                     
-                    # Your model has 3 layers (l0, l1, l2), not 2
+                    # Use 3 layers as per experiment configs (encoder_layers=3 in exp3, but to match saved)
+                    # Assume 3 layers for compatibility with saved models
                     encoder = BiLSTMEncoder(
                         vocab_size=encoder_vocab_size,
                         embed_dim=256,
                         hidden_dim=512,
-                        num_layers=3,  # Changed from 2 to 3
+                        num_layers=3,  # Adjusted to 3 for compatibility
                         dropout=0.3
                     )
                     
@@ -252,7 +259,7 @@ def load_model_and_tokenizers():
                         vocab_size=decoder_vocab_size,
                         embed_dim=256,
                         hidden_dim=512,
-                        num_layers=3,  # Changed from 2 to 3
+                        num_layers=3,  # Adjusted to 3 for compatibility
                         dropout=0.3,
                         encoder_hidden_dim=512
                     )
